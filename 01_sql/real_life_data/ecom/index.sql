@@ -67,3 +67,24 @@ create table events (
     foreign key(product_id) references products(product_id)
 );
 
+
+
+SELECT *
+FROM (
+    SELECT *,
+           ROW_NUMBER() OVER (
+               PARTITION BY order_status
+               ORDER BY total_amount DESC
+           ) AS rn
+    FROM orders
+) as t
+WHERE rn = 1;
+
+select order_date, total_amount, lag(total_amount) over (order by order_date) as yesterday_amount from orders limit 10;
+
+
+-- window function aggregate 
+SELECT *, SUM(total_amount) OVER (PARTITION BY customer) AS customer_total FROM orders;
+SELECT *, avg(total_amount) OVER (PARTITION BY customer) AS customer_total FROM orders;
+SELECT *, SUM(total_amount) OVER (PARTITION BY customer) AS customer_total FROM orders;
+
