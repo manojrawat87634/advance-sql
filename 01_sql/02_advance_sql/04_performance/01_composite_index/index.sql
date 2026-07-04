@@ -341,7 +341,6 @@ ON api_keys(expires_at);
 SELECT *
 FROM api_keys
 WHERE api_key='abc123';
-
 DELETE
 FROM api_keys
 WHERE expires_at < NOW();
