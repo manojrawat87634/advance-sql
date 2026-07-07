@@ -1,10 +1,10 @@
-create database school;
+create database if not EXISTS school;
 
 show databases;
-use database school;
+use school;
 
-create table student (name text, email text);
-create table teacher (name text, email text);
+create table if not exists student (name text, email text);
+create table if not exists teacher (name text, email text);
 
 
 insert into student (name, email) values ("abc", "abc@gmail.com"),
