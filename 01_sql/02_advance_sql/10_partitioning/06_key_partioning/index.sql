@@ -1,0 +1,9 @@
+CREATE TABLE products (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    sku VARCHAR(50) NOT NULL,
+    name VARCHAR(100),
+    price DECIMAL(10,2),
+    PRIMARY KEY (id, sku)
+)
+PARTITION BY KEY(sku)
+PARTIONS 4;

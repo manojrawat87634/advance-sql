@@ -1,0 +1,1 @@
+mysqldump -u root -p ecom > CompanyDB.sql
