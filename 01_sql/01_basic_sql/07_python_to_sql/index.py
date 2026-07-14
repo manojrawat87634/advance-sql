@@ -50,7 +50,7 @@ VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
 """
 
 # -----------------------------
-# Insert Each Row
+# Insert Each R'ow
 # -----------------------------
 for _, row in df.iterrows():
     values = (
