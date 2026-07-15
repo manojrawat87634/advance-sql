@@ -1,49 +1,36 @@
 ### Phase 1: Local Setup & Connecting
+1. **Single-Node Cluster Initiation:** How to start a local database (`cockroach start-single-node --insecure`).
+2. **Interactive SQL Shell Navigation:** How to log in and write queries directly inside the terminal using native CLI binaries (`cockroach sql`).
 
-1. Single-Node Cluster Initiation:** How to start a local database (`cockroach start-single-node --insecure`).
-2. Interactive SQL Shell Navigation:** How to log in and write queries directly inside the terminal (`cockroach sql`).
+### Phase 2: Structural Optimizations & Storage Layout
 
-### Phase 2: Foundational SQL & CRUD (The Basics)
+3. **Primary Keys for Distributed Architectures:** Understanding the unique physical routing implications of the primary key and why it dictates the data's physical location on disk.
+4. **Secondary Index Layout:** How secondary indexes are physically decoupled and stored as independent keyspace structures across the cluster.
 
-3. Creating and Managing Databases:** How to create, show, and switch between databases (`CREATE DATABASE`, `USE`).
-4. Creating Tables (DDL):** Learning how to define a table structure, column names, and basic data types (Text, Integers, Dates).
-5. Inserting Data (C in CRUD):** How to add rows to your tables (`INSERT INTO`).
-6. Reading & Filtering Data (R in CRUD):** How to retrieve data, filter it (`WHERE`), sort it (`ORDER BY`), and limit the results (`LIMIT`).
-7. Updating Data (U in CRUD):** How to safely modify existing rows (`UPDATE`).
-8. Deleting Data (D in CRUD):** How to remove data from tables (`DELETE FROM`).
+### Phase 3: Cluster Operations & Security
 
-### Phase 3: Relationships, Constraints & Indexes
+5. **Admin UI Monitoring:** Using the built-in DB Console (web dashboard at port `8080`) to watch distributed execution flows, replication status, and hardware metrics in real-time.
+6. **Multi-Node Local Clusters:** Transitioning from a single node to running a 3-node cluster on your local machine using cluster peer matching (`cockroach start` and `cockroach init`).
+7. **Secure Cluster Configuration:** Implementing cluster security by generating internal node-to-node and client-to-node SSL/TLS certificates (`cockroach cert`).
 
-9. Primary Keys:** Why every table needs a unique identifier (and why this is extra important in CockroachDB).
-10. Basic Constraints:** Enforcing data rules (`NOT NULL`, `UNIQUE`, `DEFAULT`).
-11. Foreign Keys & Relationships:** How to link two tables together (e.g., linking an `orders` table to a `users` table).
-12. Joins:** Writing queries that combine data from multiple tables simultaneously (`INNER JOIN`, `LEFT JOIN`).
-13. Secondary Indexes:** How to speed up slow search queries on non-primary key columns.
+### Phase 4: Core Storage Architecture (Under the Hood)
 
-### Phase 4: Cluster Operations & Security
+8. **The Key-Value (KV) Storage Engine:** How CockroachDB maps and flattens relational schemas, rows, and system catalogs into raw, globally ordered Key-Value pairs managed by the Pebble storage engine.
+9. **Monolithic Keyspace & Range Splitting:** How the unified keyspace is automatically partitioned into contiguous chunks ("Ranges") that dynamically split (typically at 512 MiB in modern versions) and rebalance themselves.
+10. **Raft Consensus Protocol:** How range mutation streams use the Raft log consensus to guarantee strict consistency across a majority quorum of network peers.
+11. **Leaseholders vs. Replicas:** The structural separation of duties where a single designated node (the Leaseholder) bypasses Raft consensus overhead to handle direct read/write client traffic for its given range.
+12. **Replication Factor:** Configuring zone configurations to scale the physical copy count of data ranges across independent failure domains.
 
-14. Admin UI Monitoring:** Using the built-in DB Console (web dashboard at port `8080`) to watch your queries run in real-time.
-15. Multi-Node Local Clusters:** Transitioning from a single node to running a 3-node cluster on your local machine (`cockroach start` and `cockroach init`).
-16. Secure Cluster Configuration:** Moving away from `--insecure` and generating SSL/TLS certificates (`cockroach cert`).
+### Phase 5: Distributed Query Execution
 
-### Phase 5: Core Storage Architecture (Under the Hood)
+13. **Gateway Nodes:** The multi-master entry point mechanics where *any* arbitrary node accepts a query, parses it, and transforms into the execution coordinator.
+14. **DistSQL Engine:** How the execution planner generates a directed acyclic graph (DAG) to push analytical operations down to remote leaseholder nodes, executing filtering and aggregation directly where the data lives.
+15. **Distributed Transactions:** How the database achieves absolute Serializable isolation across disparate network machines using Hybrid Logical Clocks (HLC) and Multi-Version Concurrency Control (MVCC) write intents.
+16. **Vectorized Execution:** How the execution engine switches data streaming from traditional row-by-row iteration to processing columnar batches in memory to maximize CPU cache performance.
 
-17. The Key-Value (KV) Storage Engine:** How CockroachDB translates your relational tables and rows into raw Key-Value pairs.
-18. Monolithic Keyspace & Range Splitting:** How the database automatically splits your data into $64\text{ MB}$ chunks ("Ranges") when tables get too big.
-19. Raft Consensus Protocol:** How writes are safely agreed upon and committed across multiple nodes.
-20. Leaseholders vs. Replicas:** How read/write traffic is routed to the specific node holding the "lease" for a data range.
-21. Replication Factor:** Configuring how many copies of your data exist across the cluster.
+### Phase 6: Multi-Region & Production Topology
 
-### Phase 6: Distributed Query Execution
-
-22. Gateway Nodes:** How any node in the cluster can accept a query and coordinate its execution.
-23. DistSQL Engine:** How a single SQL query is split up, executed in parallel across multiple nodes, and stitched back together.
-24. Distributed Transactions:** How CockroachDB guarantees ACID compliance (no corrupted data) across different machines.
-25. Vectorized Execution:** How the database processes batches of data in memory to make analytical queries ultra-fast.
-
-### Phase 7: Multi-Region & Production Topology
-
-26. Node Locality Settings:** Telling the database where servers physically live in the world (`--locality`).
-27. Survival Goals:** Setting up the cluster to survive the sudden death of a server zone (`SURVIVE ZONE`) or a cloud region (`SURVIVE REGION`).
-28. Table Localities:** Designing tables for global performance (Regional Tables vs. Global Tables).
-29. Primary Key Design for Scale:** Learning how to design primary keys (using UUIDs instead of auto-incrementing integers) to prevent performance bottlenecks ("hotspots") across nodes.
+17. **Node Locality Settings:** Defining cloud provider datacenter topology directly to the node processes using tier-based tags (`--locality`).
+18. **Survival Goals:** Using declarative SQL commands to structure the layout of the Raft replicas to survive the complete loss of a data center datacenter zone (`SURVIVE ZONE`) or an entire cloud region (`SURVIVE REGION`).
+19. **Table Localities:** Configuring tables for global runtime patterns by tuning physical range residency rules (`REGIONAL TABLES`, `REGIONAL TABLES BY ROW`, and `GLOBAL TABLES`).
+20. **Primary Key Design for Scale:** Overcoming monotonic index bottlenecks by utilizing UUIDs or bit-shuffled sequences (`shard_row_id_block_size`) to prevent write hotspots on individual node ranges.
