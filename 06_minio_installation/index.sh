@@ -1,38 +1,48 @@
-# 1. Download the latest MinIO DEB package
-wget https://dl.min.io/server/minio/release/linux-amd64/minio.deb
+# Exit immediately if a command fails
+set -e
 
-# 2. Install the package
-sudo dpkg -i minio.deb
-# 1. Create a dedicated group and system user
-sudo groupadd -r minio-user
-sudo useradd -M -r -g minio-user minio-user
+echo "==> 1. Updating package list & installing dependencies..."
+sudo apt update && sudo apt install -y wget systemd
 
-# 2. Create the directory where MinIO will store your files
+echo "==> 2. Downloading MinIO DEB package..."
+wget https://dl.min.io/server/minio/release/linux-amd64/minio.deb -O /tmp/minio.deb
+
+echo "==> 3. Installing MinIO package..."
+sudo dpkg -i /tmp/minio.deb
+rm -f /tmp/minio.deb
+
+echo "==> 4. Creating system user and storage folder..."
+sudo groupadd -r minio-user 2>/dev/null || true
+sudo useradd -M -r -g minio-user minio-user 2>/dev/null || true
 sudo mkdir -p /mnt/data
-
-# 3. Give ownership of the storage directory to minio-user
 sudo chown -R minio-user:minio-user /mnt/data
-sudo nano /etc/default/minio
 
-# Path to your storage directory
+echo "==> 5. Writing configuration to /etc/default/minio..."
+sudo tee /etc/default/minio > /dev/null << 'EOF'
 MINIO_VOLUMES="/mnt/data"
-
-# Console UI port (runs on port 9001)
 MINIO_OPTS="--console-address :9001"
-
-# Access credentials (Change these to secure keys for real projects)
 MINIO_ROOT_USER=minioadmin
 MINIO_ROOT_PASSWORD=minioadmin
+EOF
 
+echo "==> 6. Ensuring WSL systemd support is enabled..."
+if ! grep -q "systemd=true" /etc/wsl.conf 2>/dev/null; then
+    sudo tee -a /etc/wsl.conf > /dev/null << 'EOF'
+[boot]
+systemd=true
+EOF
+fi
 
-# 1. Reload systemd configuration
-sudo systemctl daemon-reload
-
-# 2. Start the MinIO service
-sudo systemctl start minio
-
-# 3. Enable MinIO to start automatically on system reboots
-sudo systemctl enable minio
-
-# 4. Check that MinIO is active and running
-sudo systemctl status minio
+echo "==> 7. Starting and enabling MinIO service..."
+if pidof systemd > /dev/null; then
+    sudo systemctl daemon-reload
+    sudo systemctl enable minio
+    sudo systemctl restart minio
+    echo "==> Success! MinIO status:"
+    sudo systemctl status minio --no-pager
+else
+    echo ""
+    echo "⚠️  Systemd is not active in this current WSL session yet."
+    echo "Please run 'wsl --shutdown' in Windows PowerShell, then reopen Ubuntu and run:"
+    echo "sudo systemctl start minio"
+fi
